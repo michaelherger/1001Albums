@@ -1,0 +1,16 @@
+<?xml version='1.0' standalone='yes'?>
+<extensions>
+  <id>01833c23-58ca-49f1-a76c-f4677e495d6d</id>
+  <module>Plugins::1001Albums::Plugin</module>
+  <name>PLUGIN_1001_ALBUMS</name>
+  <description>PLUGIN_1001_ALBUMS_DESC</description>
+  <creator>Michael Herger</creator>
+  <version>0.0.1</version>
+  <defaultState>enabled</defaultState>
+  <type>2</type>
+  <targetApplication>
+    <minVersion>7.9.0</minVersion>
+    <maxVersion>*</maxVersion>
+    <id>SlimServer</id>
+  </targetApplication>
+</extensions>

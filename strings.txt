@@ -1,0 +1,5 @@
+PLUGIN_1001_ALBUMS
+	EN	1001 Albums
+
+PLUGIN_1001_ALBUMS_DESC
+	EN	1001 Albums You Must Hear Before You Die
