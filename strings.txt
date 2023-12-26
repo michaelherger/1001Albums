@@ -1,5 +1,17 @@
 PLUGIN_1001_ALBUMS
-	EN	1001 Albums
-
-PLUGIN_1001_ALBUMS_DESC
 	EN	1001 Albums You Must Hear Before You Die
+
+PLUGIN_1001_ALBUMS_SHORT
+	EN	1001 Albums You Must Hear
+
+PLUGIN_1001_ALBUMS_ABOUT
+	DE	Über 1001albumsgenerator.com
+	EN	About 1001albumsgenerator.com
+
+PLUGIN_1001_ALBUMS_REVIEWS
+	DE	Albumseite auf 1001albumsgenerator.com besuchen
+	EN	Visit album page on 1001albumsgenerator.com
+
+PLUGIN_1001_ALBUMS_MISSING_USERNAME
+	DE	Bitte den Benutzernamen in den Einstellungen eingeben.
+	EN	Please enter your username in the plugin settings.

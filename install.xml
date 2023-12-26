@@ -3,7 +3,8 @@
   <id>01833c23-58ca-49f1-a76c-f4677e495d6d</id>
   <module>Plugins::1001Albums::Plugin</module>
   <name>PLUGIN_1001_ALBUMS</name>
-  <description>PLUGIN_1001_ALBUMS_DESC</description>
+  <description>PLUGIN_1001_ALBUMS</description>
+	<icon>plugins/1001Albums/html/icon.png</icon>
   <creator>Michael Herger</creator>
   <version>0.0.1</version>
   <defaultState>enabled</defaultState>

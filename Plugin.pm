@@ -8,8 +8,10 @@ use base qw(Slim::Plugin::OPMLBased);
 use Slim::Networking::SimpleAsyncHTTP;
 use Slim::Utils::Log;
 use Slim::Utils::Prefs;
+use Slim::Utils::Strings qw(cstring);
 
 use constant ALBUM_URL => 'https://1001albumsgenerator.com/api/v1/projects/';
+use constant INFO_URL => 'https://1001albumsgenerator.com/info/info';
 
 my $log = Slim::Utils::Log->addLogCategory({
 	'category'     => 'plugin.1001albums',
@@ -22,8 +24,15 @@ $prefs->init({
 	username => ''
 });
 
+my $hasSpotty;
+
 sub initPlugin {
 	my $class = shift;
+
+	if (main::WEBUI) {
+		require Plugins::1001Albums::Settings;
+		Plugins::1001Albums::Settings->new();
+	}
 
 	$class->SUPER::initPlugin(
 		feed   => \&handleFeed,
@@ -32,6 +41,19 @@ sub initPlugin {
 		is_app => 1,
 		weight => 1,
 	);
+}
+
+sub postinitPlugin {
+	my $class = shift;
+
+	# if user has the Don't Stop The Music plugin enabled, register ourselves
+	if ( Slim::Utils::PluginManager->isEnabled('Plugins::Spotty::Plugin') ) {
+		$hasSpotty = 1;
+	}
+
+	if (!$hasSpotty) {
+		$log->error("This plugin requires Spotify to work properly.");
+	}
 }
 
 sub handleFeed {
@@ -46,12 +68,18 @@ sub handleFeed {
 
 			my $history = $prefs->get('history');
 			if (!$history->[-1] || $history->[-1]->{shareableUrl} ne $albumData->{shareableUrl}) {
-				warn 'history';
 				push @$history, $albumData;
+				$prefs->set('history', $history);
 			}
 
 			$@ && $log->error($@);
 			main::DEBUGLOG && $log->is_debug && $log->debug(Data::Dump::dump($albumData));
+
+			my $items = [{
+				items => $prefs->get('username')
+					? [{ name => cstring($client, 'EMPTY') }]
+					: [{ name => cstring($client, 'PLUGIN_1001_ALBUMS_MISSING_USERNAME') }]
+			}];
 
 			if ($albumData && ref $albumData) {
 				$albumData->{currentAlbum}->{image} = $albumData->{currentAlbum}->{images}->[0]->{url};
@@ -59,15 +87,29 @@ sub handleFeed {
 				my $item = dbAlbumItem($client, $albumData->{currentAlbum})
 					|| spotifyAlbumItem($client, $albumData->{currentAlbum});
 
+				if ($item) {
+					$item->{line2} .= ' - ' . Slim::Utils::DateTime::shortDateF() if $item && $item->{url};
+					$items = [$item];
 
-				$item->{line2} .= ' - ' . Slim::Utils::DateTime::shortDateF() if $item && $item->{url};
+					if (canWeblink($client)) {
+						push @$items, {
+							name => $client->string('PLUGIN_1001_ALBUMS_REVIEWS'),
+							image => __PACKAGE__->_pluginDataFor('icon'),
+							weblink => $albumData->{currentAlbum}->{globalReviewsUrl}
+						} if $albumData->{currentAlbum}->{globalReviewsUrl};
 
-				return $cb->({
-					items => [$item]
-				});
+						push @$items, {
+							name => $client->string('PLUGIN_1001_ALBUMS_ABOUT'),
+							image => __PACKAGE__->_pluginDataFor('icon'),
+							weblink => INFO_URL
+						};
+					}
+				}
 			}
 
-			$cb->();
+			return $cb->({
+				items => $items
+			});
 		},
 		sub {
 			my ($http, $error) = @_;
@@ -109,7 +151,7 @@ sub dbAlbumItem {
 sub spotifyAlbumItem {
 	my ($client, $args) = @_;
 
-	return unless $args->{spotifyId};
+	return unless $hasSpotty && $args->{spotifyId};
 
 	return Plugins::Spotty::OPML::_albumItem($client, {
 		name    => $args->{name},
@@ -118,5 +160,15 @@ sub spotifyAlbumItem {
 		image   => $args->{images}->[0]->{url},
 	});
 }
+
+# Keep in sync with Qobuz plugin
+my $WEBLINK_SUPPORTED_UA_RE = qr/\b(?:iPeng|SqueezePad|OrangeSqueeze|OpenSqueeze|Squeezer|Squeeze-Control)\b/i;
+my $WEBBROWSER_UA_RE = qr/\b(?:FireFox|Chrome|Safari)\b/i;
+
+sub canWeblink {
+	my ($client) = @_;
+	return $client && (!$client->controllerUA || ($client->controllerUA =~ $WEBLINK_SUPPORTED_UA_RE || $client->controllerUA =~ $WEBBROWSER_UA_RE));
+}
+
 
 1;
