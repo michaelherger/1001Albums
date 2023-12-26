@@ -64,13 +64,6 @@ sub handleFeed {
 			my $response = shift;
 
 			my $albumData = eval { from_json($response->content) };
-			$albumData->{timestamp} = time();
-
-			my $history = $prefs->get('history');
-			if (!$history->[-1] || $history->[-1]->{shareableUrl} ne $albumData->{shareableUrl}) {
-				push @$history, $albumData;
-				$prefs->set('history', $history);
-			}
 
 			$@ && $log->error($@);
 			main::DEBUGLOG && $log->is_debug && $log->debug(Data::Dump::dump($albumData));
@@ -81,14 +74,20 @@ sub handleFeed {
 					: [{ name => cstring($client, 'PLUGIN_1001_ALBUMS_MISSING_USERNAME') }]
 			}];
 
+			my $history = $prefs->get('history');
+
 			if ($albumData && ref $albumData) {
+				$albumData->{timestamp} = time();
 				$albumData->{currentAlbum}->{image} = $albumData->{currentAlbum}->{images}->[0]->{url};
 
-				my $item = dbAlbumItem($client, $albumData->{currentAlbum})
-					|| spotifyAlbumItem($client, $albumData->{currentAlbum});
+				if (!$history->[-1] || $history->[-1]->{shareableUrl} ne $albumData->{shareableUrl}) {
+					push @$history, $albumData;
+					$prefs->set('history', $history);
+				}
+
+				my $item = getAlbumItem($client, $albumData);
 
 				if ($item) {
-					$item->{line2} .= ' - ' . Slim::Utils::DateTime::shortDateF() if $item && $item->{url};
 					$items = [$item];
 
 					if (canWeblink($client)) {
@@ -97,15 +96,31 @@ sub handleFeed {
 							image => __PACKAGE__->_pluginDataFor('icon'),
 							weblink => $albumData->{currentAlbum}->{globalReviewsUrl}
 						} if $albumData->{currentAlbum}->{globalReviewsUrl};
-
-						push @$items, {
-							name => $client->string('PLUGIN_1001_ALBUMS_ABOUT'),
-							image => __PACKAGE__->_pluginDataFor('icon'),
-							weblink => INFO_URL
-						};
 					}
 				}
 			}
+
+			if ($history) {
+				my $historyItems = [];
+
+				foreach (@$history) {
+					my $item = getAlbumItem($client, $_);
+					push @$historyItems, $item if $item && $item->{url};
+				}
+
+				push @$items, {
+					name  => cstring($client, 'PLUGIN_1001_ALBUMS_HISTORY'),
+					image => 'plugins/1001Albums/html/history.png',
+					type  => 'outline',
+					items => $historyItems
+				} if scalar @$historyItems;
+			}
+
+			push @$items, {
+				name => $client->string('PLUGIN_1001_ALBUMS_ABOUT'),
+				image => __PACKAGE__->_pluginDataFor('icon'),
+				weblink => INFO_URL
+			};
 
 			return $cb->({
 				items => $items
@@ -122,6 +137,19 @@ sub handleFeed {
 			expires => '1h'
 		},
 	)->get(ALBUM_URL . $prefs->get('username'));
+}
+
+sub getAlbumItem {
+	my ($client, $args) = @_;
+
+	my $item = dbAlbumItem($client, $args->{currentAlbum})
+		|| spotifyAlbumItem($client, $args->{currentAlbum});
+
+	if ($item && $item->{url}) {
+		$item->{line2} .= ' - ' . Slim::Utils::DateTime::shortDateF($args->{timestamp});
+	}
+
+	return $item;
 }
 
 sub dbAlbumItem {
