@@ -25,7 +25,7 @@ $prefs->init({
 	username => ''
 });
 
-my $hasSpotty;
+my ($hasSpotty, $hasQobuz);
 
 sub initPlugin {
 	my $class = shift;
@@ -47,13 +47,16 @@ sub initPlugin {
 sub postinitPlugin {
 	my $class = shift;
 
-	# if user has the Don't Stop The Music plugin enabled, register ourselves
 	if ( Slim::Utils::PluginManager->isEnabled('Plugins::Spotty::Plugin') ) {
 		$hasSpotty = 1;
 	}
 
-	if (!$hasSpotty) {
-		$log->error("This plugin requires Spotify to work properly.");
+	if ( Slim::Utils::PluginManager->isEnabled('Plugins::Qobuz::Plugin') ) {
+		$hasQobuz = 1;
+	}
+
+	if (!$hasSpotty && !$hasQobuz) {
+		$log->error("This plugin requires a streaming service to work properly - unless you own all 1001 albums already.");
 	}
 }
 
@@ -132,6 +135,7 @@ sub getAlbumItem {
 	my ($client, $album, $timestamp) = @_;
 
 	my $item = dbAlbumItem($client, $album)
+		|| qobuzAlbumItem($client, $album)
 		|| spotifyAlbumItem($client, $album);
 
 	if ($item && $item->{url}) {
@@ -140,6 +144,18 @@ sub getAlbumItem {
 	}
 
 	return $item;
+}
+
+sub _baseAlbumItem {
+	my ($client, $args) = @_;
+
+	return {
+		name  => $args->{name} . ' ' . cstring($client, 'BY') . ' ' . $args->{artist},
+		line1 => $args->{name},
+		line2 => $args->{artist},
+		image => $args->{images}->[0]->{url},
+		type  => 'playlist',
+	}
 }
 
 sub dbAlbumItem {
@@ -153,17 +169,12 @@ sub dbAlbumItem {
 	});
 
 	if ($album) {
-		return {
-			name          => $args->{name} . ' ' . cstring($client, 'BY') . ' ' . $args->{artist},
-			line1         => $args->{name},
-			line2         => $args->{artist},
-			image         => $args->{images}->[0]->{url},
-			type          => 'playlist',
-			playlist      => \&Slim::Menu::BrowseLibrary::_tracks,
-			url           => \&Slim::Menu::BrowseLibrary::_tracks,
-			passthrough   => [ { searchTags => ["album_id:" . $album->id], library_id => -1 } ],
-			favorites_url => $album->extid || sprintf('db:album.title=%s&contributor.name=%s', URI::Escape::uri_escape_utf8($album->name), URI::Escape::uri_escape_utf8($args->{artist})),
-		};
+		my $item = _baseAlbumItem($client, $args);
+		$item->{url} = $item->{playlist} = \&Slim::Menu::BrowseLibrary::_tracks;
+		$item->{passthrough} => [ { searchTags => ["album_id:" . $album->id], library_id => -1 } ],
+		$item->{favorites_url} => $album->extid || sprintf('db:album.title=%s&contributor.name=%s', URI::Escape::uri_escape_utf8($album->name), URI::Escape::uri_escape_utf8($args->{artist})),
+
+		return $item;
 	}
 }
 
@@ -178,6 +189,58 @@ sub spotifyAlbumItem {
 		uri     => 'spotify:album:' . $args->{spotifyId},
 		image   => $args->{images}->[0]->{url},
 	});
+}
+
+sub qobuzAlbumItem {
+	my ($client, $args) = @_;
+
+	return unless $hasQobuz;
+
+	my $item = _baseAlbumItem($client, $args);
+	$item->{url} = $item->{playlist} = sub {
+		my ($client, $cb, $params) = @_;
+
+		my $albumName = lc($args->{name});
+		my $artist = lc($args->{artist});
+
+		Plugins::Qobuz::API->search(sub {
+			my $searchResult = shift;
+
+			if (1 || !$searchResult || !$searchResult->{albums}->{items}) {
+				# TODO do something
+				$cb->({ items => [{ name => cstring($client, 'EMPTY') }] });
+				return;
+			}
+
+			my $candidate;
+
+			for my $weak (0, 1) {
+				for my $album ( @{$searchResult->{albums}->{items} || []} ) {
+					next if !($album->{artist} || lc($album->{artist}->{name}) eq $artist || ($weak && $album->{artist}->{name} =~ /^\Q$artist\E/i));
+
+					if (lc($album->{title}) eq $albumName || ($weak && $album->{title} =~ /^\Q$albumName\E/i)) {
+						$candidate = $album;
+						last;
+					}
+				}
+
+				last if $candidate;
+			}
+
+			if ($candidate) {
+				return Plugins::Qobuz::Plugin::QobuzGetTracks($client, $cb, $params, {
+					album_id => $candidate->{id}
+				});
+			}
+
+			# TODO do something useful...
+			$cb->({ items => [{ name => cstring($client, 'EMPTY') }] });
+		}, $args->{name}, 'albums', {
+			limit => 10
+		});
+	};
+
+	return $item;
 }
 
 # Keep in sync with Qobuz plugin
