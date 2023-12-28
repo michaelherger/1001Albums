@@ -166,12 +166,12 @@ sub _baseAlbumItem {
 sub dbAlbumItem {
 	my ($client, $args) = @_;
 
-	my $album = Slim::Schema->first('Album', {
+	my $album = Slim::Schema->rs('Album')->search({
 		title => $args->{name},
 		'contributor.name' => $args->{artist}
 	},{
 		prefetch => 'contributor'
-	});
+	})->first();
 
 	if ($album) {
 		my $item = _baseAlbumItem($client, $args);
@@ -232,9 +232,11 @@ sub qobuzAlbumItem {
 
 			for my $weak (0, 1) {
 				for my $album ( @{$searchResult->{albums}->{items} || []} ) {
-					next if !($album->{artist} || lc($album->{artist}->{name}) eq $artist || ($weak && $album->{artist}->{name} =~ /^\Q$artist\E/i));
+					next if !$album->{artist} || !$album->{title};
+					next if !$weak && lc($album->{artist}->{name}) ne $artist;
+					next if $weak && $album->{artist}->{name} !~ /\b\Q$artist\E\b/i;
 
-					if (lc($album->{title}) eq $albumName || ($weak && $album->{title} =~ /^\Q$albumName\E/i)) {
+					if (lc($album->{title}) eq $albumName || ($weak && $album->{title} =~ /\b\Q$albumName\E\b/i)) {
 						$candidate = $album;
 						last;
 					}
