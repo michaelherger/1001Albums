@@ -206,7 +206,7 @@ sub qobuzAlbumItem {
 		Plugins::Qobuz::API->search(sub {
 			my $searchResult = shift;
 
-			if (1 || !$searchResult || !$searchResult->{albums}->{items}) {
+			if (!$searchResult || !$searchResult->{albums}->{items}) {
 				# TODO do something
 				$cb->({ items => [{ name => cstring($client, 'EMPTY') }] });
 				return;
