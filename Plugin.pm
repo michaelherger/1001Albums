@@ -16,8 +16,8 @@ use constant ALBUM_URL => 'https://1001albumsgenerator.com/api/v1/projects/';
 use constant INFO_URL => 'https://1001albumsgenerator.com/info/info';
 
 my $log = Slim::Utils::Log->addLogCategory({
-	'category'     => 'plugin.1001albums',
-	'description'  => 'PLUGIN_1001_ALBUMS',
+	'category'    => 'plugin.1001albums',
+	'description' => 'PLUGIN_1001_ALBUMS',
 });
 
 my $prefs = preferences('plugin.1001albums');
@@ -25,7 +25,7 @@ $prefs->init({
 	username => ''
 });
 
-my ($hasSpotty, $hasQobuz);
+my ($hasSpotty, $hasQobuz, $hasTIDAL);
 
 sub initPlugin {
 	my $class = shift;
@@ -53,6 +53,10 @@ sub postinitPlugin {
 
 	if ( Slim::Utils::PluginManager->isEnabled('Plugins::Qobuz::Plugin') ) {
 		$hasQobuz = 1;
+	}
+
+	if ( !$Plugins::LastMix::Plugin::NOMYSB && Slim::Utils::PluginManager->isEnabled('Slim::Plugin::WiMP::Plugin') ) {
+		$hasTIDAL = 1;
 	}
 
 	if (!$hasSpotty && !$hasQobuz) {
@@ -135,8 +139,9 @@ sub getAlbumItem {
 	my ($client, $album, $timestamp) = @_;
 
 	my $item = dbAlbumItem($client, $album)
-		|| qobuzAlbumItem($client, $album)
-		|| spotifyAlbumItem($client, $album);
+		|| spotifyAlbumItem($client, $album)
+		|| tidalAlbumItem($client, $album)
+		|| qobuzAlbumItem($client, $album);
 
 	if ($item && $item->{url}) {
 		$item->{line2} .= ' - ' . Slim::Utils::DateTime::shortDateF($timestamp);
@@ -189,6 +194,17 @@ sub spotifyAlbumItem {
 		uri     => 'spotify:album:' . $args->{spotifyId},
 		image   => $args->{images}->[0]->{url},
 	});
+}
+
+sub tidalAlbumItem {
+	my ($client, $args) = @_;
+
+	return unless $hasTIDAL && $client && ( $client->isAppEnabled('WiMP') || $client->isAppEnabled('WiMPDK') );
+
+	my $item = _baseAlbumItem($client, $args);
+	$item->{url} = $item->{playlist} = 'https://tidal.com/browse/album/' . $args->{tidalId};
+
+	return $item;
 }
 
 sub qobuzAlbumItem {
