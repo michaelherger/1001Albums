@@ -4,6 +4,7 @@ use strict;
 
 use Date::Parse qw(str2time);
 use JSON::XS::VersionOneAndTwo;
+use Text::Levenshtein;
 
 use base qw(Slim::Plugin::OPMLBased);
 
@@ -14,6 +15,7 @@ use Slim::Utils::Strings qw(cstring);
 
 use constant ALBUM_URL => 'https://1001albumsgenerator.com/api/v1/projects/';
 use constant INFO_URL => 'https://1001albumsgenerator.com/info/info';
+use constant MAX_DISTANCE => 5;
 
 my $log = Slim::Utils::Log->addLogCategory({
 	'category'    => 'plugin.1001albums',
@@ -176,8 +178,8 @@ sub dbAlbumItem {
 	if ($album) {
 		my $item = _baseAlbumItem($client, $args);
 		$item->{url} = $item->{playlist} = \&Slim::Menu::BrowseLibrary::_tracks;
-		$item->{passthrough} => [ { searchTags => ["album_id:" . $album->id], library_id => -1 } ],
-		$item->{favorites_url} => $album->extid || sprintf('db:album.title=%s&contributor.name=%s', URI::Escape::uri_escape_utf8($album->name), URI::Escape::uri_escape_utf8($args->{artist})),
+		$item->{passthrough} = [ { searchTags => ["album_id:" . $album->id], library_id => -1 } ],
+		$item->{favorites_url} = $album->extid || sprintf('db:album.title=%s&contributor.name=%s', URI::Escape::uri_escape_utf8($album->name), URI::Escape::uri_escape_utf8($args->{artist})),
 
 		return $item;
 	}
@@ -232,11 +234,17 @@ sub qobuzAlbumItem {
 
 			for my $weak (0, 1) {
 				for my $album ( @{$searchResult->{albums}->{items} || []} ) {
+					if (main::DEBUGLOG && $log->is_debug) {
+						$log->debug(Data::Dump::dump({
+							artist => $album->{artist}->{name},
+							album => $album->{title},
+						}));
+					}
 					next if !$album->{artist} || !$album->{title};
 					next if !$weak && lc($album->{artist}->{name}) ne $artist;
-					next if $weak && $album->{artist}->{name} !~ /\b\Q$artist\E\b/i;
+					next if $weak && $album->{artist}->{name} !~ /\b\Q$artist\E\b/i && Text::Levenshtein::distance(lc($album->{artist}->{name}), $artist) > MAX_DISTANCE;
 
-					if (lc($album->{title}) eq $albumName || ($weak && $album->{title} =~ /\b\Q$albumName\E\b/i)) {
+					if (lc($album->{title}) eq $albumName || ($weak && ($album->{title} =~ /\b\Q$albumName\E\b/i || Text::Levenshtein::distance(lc($album->{title}), $albumName) <= MAX_DISTANCE))) {
 						$candidate = $album;
 						last;
 					}
