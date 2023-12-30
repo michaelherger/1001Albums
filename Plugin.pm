@@ -54,6 +54,7 @@ sub postinitPlugin {
 	}
 
 	if ( Slim::Utils::PluginManager->isEnabled('Plugins::Qobuz::Plugin') ) {
+		require Plugins::1001Albums::Spotify2Qobuz;
 		$hasQobuz = 1;
 	}
 
@@ -214,57 +215,16 @@ sub qobuzAlbumItem {
 
 	return unless $hasQobuz;
 
+	my $id = $args->{qobuzId} || Plugins::1001Albums::Spotify2Qobuz->get($args->{spotifyId});
+
+	return unless $id;
+
 	my $item = _baseAlbumItem($client, $args);
-	$item->{url} = $item->{playlist} = sub {
-		my ($client, $cb, $params) = @_;
-
-		my $albumName = lc($args->{name});
-		my $artist = lc($args->{artist});
-
-		Plugins::Qobuz::API->search(sub {
-			my $searchResult = shift;
-
-			if (!$searchResult || !$searchResult->{albums}->{items}) {
-				# TODO do something
-				$cb->({ items => [{ name => cstring($client, 'EMPTY') }] });
-				return;
-			}
-
-			my $candidate;
-
-			for my $weak (0, 1) {
-				for my $album ( @{$searchResult->{albums}->{items} || []} ) {
-					if (main::DEBUGLOG && $log->is_debug) {
-						$log->debug(Data::Dump::dump({
-							artist => $album->{artist}->{name},
-							album => $album->{title},
-						}));
-					}
-					next if !$album->{artist} || !$album->{title};
-					next if !$weak && lc($album->{artist}->{name}) ne $artist;
-					next if $weak && $album->{artist}->{name} !~ /\b\Q$artist\E\b/i && Text::Levenshtein::distance(lc($album->{artist}->{name}), $artist) > MAX_DISTANCE;
-
-					if (lc($album->{title}) eq $albumName || ($weak && ($album->{title} =~ /\b\Q$albumName\E\b/i || Text::Levenshtein::distance(lc($album->{title}), $albumName) <= MAX_DISTANCE))) {
-						$candidate = $album;
-						last;
-					}
-				}
-
-				last if $candidate;
-			}
-
-			if ($candidate) {
-				return Plugins::Qobuz::Plugin::QobuzGetTracks($client, $cb, $params, {
-					album_id => $candidate->{id}
-				});
-			}
-
-			# TODO do something useful...
-			$cb->({ items => [{ name => cstring($client, 'EMPTY') }] });
-		}, $args->{name}, 'albums', {
-			limit => 10
-		});
-	};
+	$item->{url} = $item->{playlist} = \&Plugins::Qobuz::Plugin::QobuzGetTracks;
+	$item->{passthrough} = [{
+		album_id => $id,
+		album_title => $args->{name},
+	}];
 
 	return $item;
 }
