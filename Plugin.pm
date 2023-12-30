@@ -13,6 +13,7 @@ use Slim::Utils::Log;
 use Slim::Utils::Prefs;
 use Slim::Utils::Strings qw(cstring);
 
+use constant BASE_URL => 'https://1001albumsgenerator.com/';
 use constant ALBUM_URL => 'https://1001albumsgenerator.com/api/v1/projects/';
 use constant INFO_URL => 'https://1001albumsgenerator.com/info/info';
 use constant MAX_DISTANCE => 5;
@@ -70,6 +71,10 @@ sub postinitPlugin {
 sub handleFeed {
 	my ($client, $cb) = @_;
 
+	if (!$prefs->get('username')) {
+		return $cb->([{ name => cstring($client, 'PLUGIN_1001_ALBUMS_MISSING_USERNAME') }]);
+	}
+
 	Slim::Networking::SimpleAsyncHTTP->new(
 		sub {
 			my $response = shift;
@@ -93,8 +98,14 @@ sub handleFeed {
 				}
 
 				push @$items, {
+					name => $client->string('PLUGIN_1001_PROJECT_PAGE'),
+					image => 'plugins/1001Albums/html/profile.png',
+					weblink => BASE_URL . $prefs->get('username'),
+				} if canWeblink($client);
+
+				push @$items, {
 					name => $client->string('PLUGIN_1001_ALBUMS_REVIEWS'),
-					image => __PACKAGE__->_pluginDataFor('icon'),
+					image => 'plugins/1001Albums/html/albumreviews.png',
 					weblink => $currentAlbum->{globalReviewsUrl}
 				} if $currentAlbum->{globalReviewsUrl} && canWeblink($client);
 

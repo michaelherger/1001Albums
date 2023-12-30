@@ -4,6 +4,10 @@ PLUGIN_1001_ALBUMS
 PLUGIN_1001_ALBUMS_SHORT
 	EN	1001 Albums You Must Hear
 
+PLUGIN_1001_PROJECT_PAGE
+	DE	Deine Projektseite besuchen
+	EN	Visit your project page
+
 PLUGIN_1001_ALBUMS_ABOUT
 	DE	Über 1001albumsgenerator.com
 	EN	About 1001albumsgenerator.com
