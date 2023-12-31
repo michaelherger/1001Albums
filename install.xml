@@ -4,7 +4,7 @@
   <module>Plugins::1001Albums::Plugin</module>
   <name>PLUGIN_1001_ALBUMS</name>
   <description>PLUGIN_1001_ALBUMS</description>
-	<icon>plugins/1001Albums/html/icon.png</icon>
+	<icon>plugins/1001Albums/html/icon_svg.png</icon>
   <creator>Michael Herger</creator>
   <homepageURL>https://1001albumsgenerator.com/</homepageURL>
   <version>0.9.0</version>

@@ -105,7 +105,7 @@ sub handleFeed {
 
 				push @$items, {
 					name => $client->string('PLUGIN_1001_ALBUMS_REVIEWS'),
-					image => 'plugins/1001Albums/html/albumreviews.png',
+					image => 'plugins/1001Albums/html/albumreviews_MTL_icon_rate_review.png',
 					weblink => $currentAlbum->{globalReviewsUrl}
 				} if $currentAlbum->{globalReviewsUrl} && canWeblink($client);
 
@@ -119,7 +119,7 @@ sub handleFeed {
 
 					push @$items, {
 						name  => cstring($client, 'PLUGIN_1001_ALBUMS_HISTORY'),
-						image => 'plugins/1001Albums/html/history.png',
+						image => 'plugins/1001Albums/html/history_MTL_icon_history.png',
 						type  => 'outline',
 						items => $historyItems
 					} if scalar @$historyItems;
@@ -128,7 +128,7 @@ sub handleFeed {
 
 			push @$items, {
 				name => $client->string('PLUGIN_1001_PROJECT_PAGE'),
-				image => 'plugins/1001Albums/html/profile.png',
+				image => 'plugins/1001Albums/html/profile_MTL_icon_bar_chart.png',
 				weblink => BASE_URL . $prefs->get('username'),
 			} if canWeblink($client);
 
