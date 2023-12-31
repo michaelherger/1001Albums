@@ -55,7 +55,6 @@ sub postinitPlugin {
 	}
 
 	if ( Slim::Utils::PluginManager->isEnabled('Plugins::Qobuz::Plugin') ) {
-		require Plugins::1001Albums::Spotify2Qobuz;
 		$hasQobuz = 1;
 	}
 
@@ -230,16 +229,12 @@ sub tidalAlbumItem {
 sub qobuzAlbumItem {
 	my ($client, $args) = @_;
 
-	return unless $hasQobuz;
-
-	my $id = $args->{qobuzId} || Plugins::1001Albums::Spotify2Qobuz->get($args->{spotifyId});
-
-	return unless $id;
+	return unless $hasQobuz && $args->{qobuzId};
 
 	my $item = _baseAlbumItem($client, $args);
 	$item->{url} = $item->{playlist} = \&Plugins::Qobuz::Plugin::QobuzGetTracks;
 	$item->{passthrough} = [{
-		album_id => $id,
+		album_id => $args->{qobuzId},
 		album_title => $args->{name},
 	}];
 
