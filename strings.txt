@@ -12,6 +12,10 @@ PLUGIN_1001_ALBUMS_ABOUT
 	DE	Über 1001albumsgenerator.com
 	EN	About 1001albumsgenerator.com
 
+PLUGIN_1001_ALBUMS_MORE_INFORMATION
+	DE	Besuche 1001albumsgenerator.com für weitere Informationen
+	EN	Visit 1001albumsgenerator.com for more information
+
 PLUGIN_1001_ALBUMS_REVIEWS
 	DE	Albumseite auf 1001albumsgenerator.com besuchen
 	EN	Visit album page on 1001albumsgenerator.com
@@ -23,3 +27,7 @@ PLUGIN_1001_ALBUMS_HISTORY
 PLUGIN_1001_ALBUMS_MISSING_USERNAME
 	DE	Bitte den Benutzernamen in den Einstellungen eingeben.
 	EN	Please enter your username in the plugin settings.
+
+PLUGIN_1001_ALBUMS_FAILED_VALIDATION
+	DE	Verifizierung des Profils ist fehlgeschlagen (%s).
+	EN	Failed to validate the profile name (%s).

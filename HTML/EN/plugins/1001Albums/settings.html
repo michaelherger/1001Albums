@@ -2,6 +2,12 @@
 	[% title = "PLUGIN_1001_ALBUMS" %]
 
 	[% WRAPPER setting title="SETUP_USERNAME" desc="" %]
+		[% IF validation_error %]
+			<div style="color: red">[% validation_error %]</div><br/><br/>
+		[% END %]
+
 		<input name="pref_username" id="pref_username" type="text" value="[% prefs.pref_username %]" class="stdedit" size="40">
+		<br/><br/>
+		<p><a href="[% infolink %]" target="_blank">[% "PLUGIN_1001_ALBUMS_MORE_INFORMATION" | string %]</a>.</p>
 	[% END %]
 [% PROCESS settings/footer.html %]

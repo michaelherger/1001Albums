@@ -72,7 +72,13 @@ sub handleFeed {
 	my ($client, $cb) = @_;
 
 	if (!$prefs->get('username')) {
-		return $cb->([{ name => cstring($client, 'PLUGIN_1001_ALBUMS_MISSING_USERNAME') }]);
+		return $cb->([{
+			name => cstring($client, 'PLUGIN_1001_ALBUMS_MISSING_USERNAME'),
+			type => 'text'
+		},{
+			name => $client->string('PLUGIN_1001_ALBUMS_MORE_INFORMATION'),
+			weblink => BASE_URL
+		}]);
 	}
 
 	Slim::Networking::SimpleAsyncHTTP->new(
