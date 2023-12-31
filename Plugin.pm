@@ -98,12 +98,6 @@ sub handleFeed {
 				}
 
 				push @$items, {
-					name => $client->string('PLUGIN_1001_PROJECT_PAGE'),
-					image => 'plugins/1001Albums/html/profile.png',
-					weblink => BASE_URL . $prefs->get('username'),
-				} if canWeblink($client);
-
-				push @$items, {
 					name => $client->string('PLUGIN_1001_ALBUMS_REVIEWS'),
 					image => 'plugins/1001Albums/html/albumreviews.png',
 					weblink => $currentAlbum->{globalReviewsUrl}
@@ -114,7 +108,7 @@ sub handleFeed {
 
 					foreach (@{$albumData->{history}}) {
 						my $item = getAlbumItem($client, $_->{album}, str2time($_->{generatedAt}));
-						push @$historyItems, $item if $item && $item->{url};
+						unshift @$historyItems, $item if $item && $item->{url};
 					}
 
 					push @$items, {
@@ -125,6 +119,12 @@ sub handleFeed {
 					} if scalar @$historyItems;
 				}
 			}
+
+			push @$items, {
+				name => $client->string('PLUGIN_1001_PROJECT_PAGE'),
+				image => 'plugins/1001Albums/html/profile.png',
+				weblink => BASE_URL . $prefs->get('username'),
+			} if canWeblink($client);
 
 			push @$items, {
 				name => $client->string('PLUGIN_1001_ALBUMS_ABOUT'),
