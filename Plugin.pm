@@ -4,7 +4,6 @@ use strict;
 
 use Date::Parse qw(str2time);
 use JSON::XS::VersionOneAndTwo;
-use Text::Levenshtein;
 
 use base qw(Slim::Plugin::OPMLBased);
 
@@ -15,7 +14,6 @@ use Slim::Utils::Strings qw(cstring);
 
 use constant BASE_URL => 'https://1001albumsgenerator.com/';
 use constant ALBUM_URL => 'https://1001albumsgenerator.com/api/v1/projects/';
-use constant MAX_DISTANCE => 5;
 
 my $log = Slim::Utils::Log->addLogCategory({
 	'category'    => 'plugin.1001albums',
@@ -54,6 +52,7 @@ sub postinitPlugin {
 	}
 
 	if ( Slim::Utils::PluginManager->isEnabled('Plugins::Qobuz::Plugin') ) {
+		require Plugins::1001Albums::Qobuz;
 		$hasQobuz = 1;
 	}
 
@@ -228,13 +227,18 @@ sub tidalAlbumItem {
 sub qobuzAlbumItem {
 	my ($client, $args) = @_;
 
-	return unless $hasQobuz && $args->{qobuzId};
+	return unless $hasQobuz;
+
+	my $id = $args->{qobuzId} || Plugins::1001Albums::Qobuz->getId($args->{spotifyId});
+
+	return unless $id;
 
 	my $item = _baseAlbumItem($client, $args);
-	$item->{url} = $item->{playlist} = \&Plugins::Qobuz::Plugin::QobuzGetTracks;
+	$item->{url} = $item->{playlist} = \&Plugins::1001Albums::Qobuz::getAlbum;
 	$item->{passthrough} = [{
-		album_id => $args->{qobuzId},
+		album_id => $id,
 		album_title => $args->{name},
+		album_artist => $args->{artist},
 	}];
 
 	return $item;
