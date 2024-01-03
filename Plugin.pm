@@ -185,8 +185,8 @@ sub dbAlbumItem {
 	my ($client, $args) = @_;
 
 	my $album = Slim::Schema->rs('Album')->search({
-		title => $args->{name},
-		'contributor.name' => $args->{artist}
+		title => { like => $args->{name} },
+		'contributor.name' => { like => $args->{artist} },
 	},{
 		prefetch => 'contributor'
 	})->first();
