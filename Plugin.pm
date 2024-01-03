@@ -15,7 +15,6 @@ use Slim::Utils::Strings qw(cstring);
 
 use constant BASE_URL => 'https://1001albumsgenerator.com/';
 use constant ALBUM_URL => 'https://1001albumsgenerator.com/api/v1/projects/';
-use constant INFO_URL => 'https://1001albumsgenerator.com/info/info';
 use constant MAX_DISTANCE => 5;
 
 my $log = Slim::Utils::Log->addLogCategory({
@@ -134,7 +133,7 @@ sub handleFeed {
 			push @$items, {
 				name => $client->string('PLUGIN_1001_ALBUMS_ABOUT'),
 				image => __PACKAGE__->_pluginDataFor('icon'),
-				weblink => INFO_URL
+				weblink => BASE_URL
 			} if canWeblink($client);
 
 			return $cb->({
