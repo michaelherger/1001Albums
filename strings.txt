@@ -31,3 +31,7 @@ PLUGIN_1001_ALBUMS_MISSING_USERNAME
 PLUGIN_1001_ALBUMS_FAILED_VALIDATION
 	DE	Verifizierung des Profils ist fehlgeschlagen (%s).
 	EN	Failed to validate the profile name (%s).
+
+PLUGIN_1001_ALBUMS_429
+	DE	Bitte probieres in ein paar Minuten wieder.
+	EN	Please try again in a minute or two.

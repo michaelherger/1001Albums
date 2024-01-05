@@ -85,7 +85,15 @@ sub handleFeed {
 			my $albumData = eval { from_json($response->content) };
 
 			$@ && $log->error($@);
-			main::DEBUGLOG && $log->is_debug && $log->debug(Data::Dump::dump($albumData));
+
+			if (main::DEBUGLOG && $log->is_debug) {
+				$log->debug(Data::Dump::dump($albumData));
+			}
+			elsif (main::INFOLOG && $log->is_info) {
+				my $limitedAlbumData = Storable::dclone($albumData);
+				$limitedAlbumData->{history} = ['...'];
+				$log->info(Data::Dump::dump($limitedAlbumData));
+			}
 
 			my $items = [{
 				items => $prefs->get('username')
@@ -143,7 +151,15 @@ sub handleFeed {
 			my ($http, $error) = @_;
 
 			$log->warn("Error: $error");
-			$cb->();
+
+			if ($error =~ /429 too many/i) {
+				return $cb->([{
+					name => cstring($client, 'PLUGIN_1001_ALBUMS_429'),
+					type => 'text'
+				}]);
+			}
+
+			$cb->([{ name => cstring($client, 'EMPTY') }]);
 		},
 		{
 			cache => 1,

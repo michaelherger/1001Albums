@@ -20,7 +20,7 @@ sub prefs {
 sub handler {
 	my ($class, $client, $params, $callback, @args) = @_;
 
-	if ($params->{saveSettings} && $params->{pref_username}) {
+	if ($params->{saveSettings} && $params->{pref_username} ne $prefs->get('username')) {
 		my $cb = sub {
 			my ($response, $error) = @_;
 
@@ -32,8 +32,14 @@ sub handler {
 				$log->error("Failed profile validation: $error");
 				$params->{validation_error} = Slim::Utils::Strings::string('PLUGIN_1001_ALBUMS_FAILED_VALIDATION', $error);
 			}
-
-			main::DEBUGLOG && $log->is_debug && $profile && $log->debug(Data::Dump::dump($profile));
+			elsif (main::DEBUGLOG && $log->is_debug) {
+				$log->debug(Data::Dump::dump($profile));
+			}
+			elsif (main::INFOLOG && $log->is_info) {
+				my $limitedProfile = Storable::dclone($profile);
+				$limitedProfile->{history} = ['...'];
+				$log->info(Data::Dump::dump($limitedProfile));
+			}
 
 			return $callback->( $client, $params, $class->SUPER::handler($client, $params), @args );
 		};
