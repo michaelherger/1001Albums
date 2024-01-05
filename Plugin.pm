@@ -95,18 +95,14 @@ sub handleFeed {
 				$log->info(Data::Dump::dump($limitedAlbumData));
 			}
 
-			my $items = [{
-				items => $prefs->get('username')
-					? [{ name => cstring($client, 'EMPTY') }]
-					: [{ name => cstring($client, 'PLUGIN_1001_ALBUMS_MISSING_USERNAME') }]
-			}];
+			my $items = [];
 
-			if ($albumData && ref $albumData && (my $currentAlbum = $albumData->{currentAlbum})) {
-				my $item = getAlbumItem($client, $currentAlbum);
+			if (!$prefs->get('username')) {
+				push @$items, [{ name => cstring($client, 'PLUGIN_1001_ALBUMS_MISSING_USERNAME') }]
+			}
 
-				if ($item) {
-					$items = [$item];
-				}
+			if ($albumData && ref $albumData && !$albumData->{paused} && (my $currentAlbum = $albumData->{currentAlbum})) {
+				push @$items, getAlbumItem($client, $currentAlbum);
 
 				push @$items, {
 					name => $client->string('PLUGIN_1001_ALBUMS_REVIEWS'),
@@ -131,11 +127,20 @@ sub handleFeed {
 				}
 			}
 
-			push @$items, {
-				name => $client->string('PLUGIN_1001_PROJECT_PAGE'),
-				image => 'plugins/1001Albums/html/profile_MTL_icon_bar_chart.png',
-				weblink => BASE_URL . $prefs->get('username'),
-			} if canWeblink($client);
+			if ($albumData && $albumData->{paused}) {
+				push @$items, {
+					name => $client->string('PLUGIN_1001_PROJECT_PAUSED'),
+					image => 'plugins/1001Albums/html/profile_MTL_icon_bar_chart.png',
+					weblink => BASE_URL . $prefs->get('username'),
+				};
+			}
+			elsif (canWeblink($client)) {
+				push @$items, {
+					name => $client->string('PLUGIN_1001_PROJECT_PAGE'),
+					image => 'plugins/1001Albums/html/profile_MTL_icon_bar_chart.png',
+					weblink => BASE_URL . $prefs->get('username'),
+				};
+			}
 
 			push @$items, {
 				name => $client->string('PLUGIN_1001_ALBUMS_ABOUT'),
@@ -163,7 +168,7 @@ sub handleFeed {
 		},
 		{
 			cache => 1,
-			expires => '1h'
+			expires => 15 * 60
 		},
 	)->get(ALBUM_URL . $prefs->get('username'));
 }
