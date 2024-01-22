@@ -14,7 +14,7 @@ my $log = logger('plugin.1001albums');
 
 use constant MAX_DISTANCE => 5;
 
-# Some tracks I didn't find on Qobuz, but they might be available in other regions.
+# Some albums I didn't find on Qobuz, but they might be available in other regions.
 # Return a truthy value which would cause the plugin to use text search anyway.
 my $spotify2QobuzMap = 	{
 	"0cGaQUOlAm0smFXWUB8KIL" => "-1",
@@ -43,14 +43,15 @@ sub getAlbum {
 	my ($client, $cb, $params, $args) = @_;
 
 	my $albumId = $args->{album_id};
+	my $albumName = $args->{album_title};
 
 	return searchAlbum($client, $cb, $params, $args) if $albumId == -1;
 
-	Plugins::Qobuz::API->getAlbum(sub {
+	Plugins::Qobuz::Plugin::getAPIHandler($client)->getAlbum(sub {
 		my $album = shift;
 
 		if ($album) {
-			main::INFOLOG && $log->is_info && $log->info("Found Qobuz track by ID: $albumId");
+			main::INFOLOG && $log->is_info && $log->info("Found Qobuz album \"$albumName\" by ID $albumId");
 			return Plugins::Qobuz::Plugin::QobuzGetTracks($client, $cb, $params, $args);
 		}
 
@@ -64,9 +65,9 @@ sub searchAlbum {
 	my $albumName = lc($args->{album_title});
 	my $artist = lc($args->{album_artist});
 
-	main::INFOLOG && $log->is_info && $log->info("Did not find Qobuz track by ID, try text search instead: $albumName - $artist");
+	main::INFOLOG && $log->is_info && $log->info("Did not find Qobuz album by ID, try text search instead: \"$args->{album_title}\" by $args->{album_artist}");
 
-	Plugins::Qobuz::API->search(sub {
+	Plugins::Qobuz::Plugin::getAPIHandler($client)->search(sub {
 		my $searchResult = shift;
 
 		if (!$searchResult || !$searchResult->{albums}->{items}) {
