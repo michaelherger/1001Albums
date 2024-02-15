@@ -243,7 +243,7 @@ sub ytAlbumItem {
 	return unless $hasYT && $args->{youtubeMusicId};
 
 	my $item = _baseAlbumItem($client, $args);
-	$item->{url} = $item->{playlist} = 'youtube://' . $args->{youtubeMusicId};
+	$item->{url} = $item->{playlist} = 'https://music.youtube.com/playlist?list=' . $args->{youtubeMusicId};
 
 	return $item;
 }
