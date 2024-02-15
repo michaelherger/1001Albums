@@ -25,7 +25,7 @@ $prefs->init({
 	username => ''
 });
 
-my ($hasSpotty, $hasQobuz, $hasTIDAL);
+my ($hasSpotty, $hasQobuz, $hasTIDAL, $hasYT);
 
 sub initPlugin {
 	my $class = shift;
@@ -47,20 +47,22 @@ sub initPlugin {
 sub postinitPlugin {
 	my $class = shift;
 
-	if ( Slim::Utils::PluginManager->isEnabled('Plugins::Spotty::Plugin') ) {
-		$hasSpotty = 1;
-	}
+	$hasSpotty = Slim::Utils::PluginManager->isEnabled('Plugins::Spotty::Plugin');
+	$hasYT = Slim::Utils::PluginManager->isEnabled('Plugins::YouTube::Plugin');
 
 	if ( Slim::Utils::PluginManager->isEnabled('Plugins::Qobuz::Plugin') ) {
 		require Plugins::1001Albums::Qobuz;
 		$hasQobuz = 1;
 	}
 
-	if ( !$Plugins::LastMix::Plugin::NOMYSB && Slim::Utils::PluginManager->isEnabled('Slim::Plugin::WiMP::Plugin') ) {
+	if ( Slim::Utils::PluginManager->isEnabled('Plugins::TIDAL::Plugin') ) {
+		$hasTIDAL = 1;
+	}
+	elsif ( !(Slim::Utils::Versions->compareVersions($::VERSION, '7.9') >= 0 && main::NOMYSB()) && Slim::Utils::PluginManager->isEnabled('Slim::Plugin::WiMP::Plugin') ) {
 		$hasTIDAL = 1;
 	}
 
-	if (!$hasSpotty && !$hasQobuz) {
+	if (!$hasSpotty && !$hasQobuz && !$hasTIDAL && !$hasYT) {
 		$log->error("This plugin requires a streaming service to work properly - unless you own all 1001 albums already.");
 	}
 }
@@ -179,7 +181,8 @@ sub getAlbumItem {
 	my $item = dbAlbumItem($client, $album)
 		|| spotifyAlbumItem($client, $album)
 		|| tidalAlbumItem($client, $album)
-		|| qobuzAlbumItem($client, $album);
+		|| qobuzAlbumItem($client, $album)
+		|| ytAlbumItem($client, $album);
 
 	if ($item && $item->{url}) {
 		$item->{line2} .= ' - ' . Slim::Utils::DateTime::shortDateF($timestamp);
@@ -232,6 +235,17 @@ sub spotifyAlbumItem {
 		uri     => 'spotify:album:' . $args->{spotifyId},
 		image   => $args->{images}->[0]->{url},
 	});
+}
+
+sub ytAlbumItem {
+	my ($client, $args) = @_;
+
+	return unless $hasYT && $args->{youtubeMusicId};
+
+	my $item = _baseAlbumItem($client, $args);
+	$item->{url} = $item->{playlist} = 'youtube://' . $args->{youtubeMusicId};
+
+	return $item;
 }
 
 sub tidalAlbumItem {
