@@ -243,7 +243,9 @@ sub ytAlbumItem {
 	return unless $hasYT && $args->{youtubeMusicId};
 
 	my $item = _baseAlbumItem($client, $args);
-	$item->{url} = $item->{playlist} = 'ytplaylist://playlist?list=' . $args->{youtubeMusicId};
+
+	$args->{youtubeMusicId} =~ s/[&?].*//;	# Everything up to & to handle 1234asbcXYZ&feature=share or perhaps ?something
+	$item->{url} = $item->{playlist} = 'https://music.youtube.com/playlist?list=' . $args->{youtubeMusicId};
 
 	return $item;
 }
