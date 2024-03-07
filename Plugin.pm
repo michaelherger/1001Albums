@@ -115,6 +115,7 @@ sub handleFeed {
 				if ($albumData->{history}) {
 					my $historyItems = [];
 
+					# TODO - only render the history list when we drill down to it!
 					foreach (@{$albumData->{history}}) {
 						my $item = getAlbumItem($client, $_->{album}, str2time($_->{generatedAt}));
 						unshift @$historyItems, $item if $item && $item->{url};
@@ -253,7 +254,7 @@ sub ytAlbumItem {
 sub tidalAlbumItem {
 	my ($client, $args) = @_;
 
-	return unless $hasTIDAL && $client && ( $client->isAppEnabled('WiMP') || $client->isAppEnabled('WiMPDK') );
+	return unless $hasTIDAL && $client;
 
 	my $item = _baseAlbumItem($client, $args);
 	$item->{url} = $item->{playlist} = 'https://tidal.com/browse/album/' . $args->{tidalId};
