@@ -25,7 +25,7 @@ $prefs->init({
 	username => ''
 });
 
-my ($hasSpotty, $hasQobuz, $hasTIDAL, $hasYT);
+my ($hasDeezer, $hasSpotty, $hasQobuz, $hasTIDAL, $hasYT);
 
 sub initPlugin {
 	my $class = shift;
@@ -62,7 +62,12 @@ sub postinitPlugin {
 		$hasTIDAL = 1;
 	}
 
-	if (!$hasSpotty && !$hasQobuz && !$hasTIDAL && !$hasYT) {
+	if ( Slim::Utils::PluginManager->isEnabled('Plugins::Deezer::Plugin') ) {
+		require Plugins::1001Albums::Deezer;
+		$hasDeezer = 1;
+	}
+
+	if (!$hasDeezer && !$hasSpotty && !$hasQobuz && !$hasTIDAL && !$hasYT) {
 		$log->error("This plugin requires a streaming service to work properly - unless you own all 1001 albums already.");
 	}
 }
@@ -115,7 +120,6 @@ sub handleFeed {
 				if ($albumData->{history}) {
 					my $historyItems = [];
 
-					# TODO - only render the history list when we drill down to it!
 					foreach (@{$albumData->{history}}) {
 						my $item = getAlbumItem($client, $_->{album}, str2time($_->{generatedAt}));
 						unshift @$historyItems, $item if $item && $item->{url};
@@ -190,6 +194,8 @@ sub getAlbumItem {
 		$item->{name}  .= ' - ' . Slim::Utils::DateTime::shortDateF($timestamp);
 	}
 
+	main::INFOLOG && $log->is_info && $log->info(Data::Dump::dump($item));
+
 	return $item;
 }
 
@@ -225,17 +231,39 @@ sub dbAlbumItem {
 	}
 }
 
+sub deezerAlbumItem {
+	my ($client, $args) = @_;
+
+	return unless $hasDeezer;
+
+	my $id = $args->{deezerId} || Plugins::1001Albums::Deezer->getId($args->{spotifyId}) || return;
+
+	my $item = _baseAlbumItem($client, $args);
+
+	if ($id ne '-1') {
+		$item->{url} = $item->{playlist} = "deezer://album:$id";
+		return $item;
+	}
+
+	$item->{url} = $item->{playlist} = \&Plugins::1001Albums::Deezer::getAlbum;
+	$item->{passthrough} = [{
+		album_id => $id,
+		album_title => $args->{name},
+		album_artist => $args->{artist},
+	}];
+
+	return $item;
+}
+
 sub spotifyAlbumItem {
 	my ($client, $args) = @_;
 
 	return unless $hasSpotty && $args->{spotifyId};
 
-	return Plugins::Spotty::OPML::_albumItem($client, {
-		name    => $args->{name},
-		artists => [{ name => $args->{artist}}],
-		uri     => 'spotify:album:' . $args->{spotifyId},
-		image   => $args->{images}->[0]->{url},
-	});
+	my $item = _baseAlbumItem($client, $args);
+	$item->{url} = $item->{playlist} = 'spotify:album:' . $args->{spotifyId};
+
+	return $item;
 }
 
 sub ytAlbumItem {
@@ -267,11 +295,15 @@ sub qobuzAlbumItem {
 
 	return unless $hasQobuz;
 
-	my $id = $args->{qobuzId} || Plugins::1001Albums::Qobuz->getId($args->{spotifyId});
-
-	return unless $id;
+	my $id = $args->{qobuzId} || Plugins::1001Albums::Qobuz->getId($args->{spotifyId}) || return;
 
 	my $item = _baseAlbumItem($client, $args);
+
+	if ($id ne '-1') {
+		$item->{url} = $item->{playlist} = "qobuz:album:$id";
+		return $item;
+	}
+
 	$item->{url} = $item->{playlist} = \&Plugins::1001Albums::Qobuz::getAlbum;
 	$item->{passthrough} = [{
 		album_id => $id,

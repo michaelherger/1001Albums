@@ -1,4 +1,4 @@
-package Plugins::1001Albums::Qobuz;
+package Plugins::1001Albums::Deezer;
 
 use strict;
 
@@ -7,37 +7,25 @@ use Text::Levenshtein;
 use Slim::Utils::Log;
 use Slim::Utils::Strings qw(cstring);
 
-use Plugins::Qobuz::Plugin;
-use Plugins::Qobuz::API;
+use Plugins::Deezer::Plugin;
+use Plugins::Deezer::API::Async;
 
 my $log = logger('plugin.1001albums');
 
 use constant MAX_DISTANCE => 5;
 
-# Some albums I didn't find on Qobuz, but they might be available in other regions.
+# Some albums we didn't find on Deezer, but they might be available in other regions.
 # Return a truthy value which would cause the plugin to use text search anyway.
-my $spotify2QobuzMap = 	{
-	"0cGaQUOlAm0smFXWUB8KIL" => "-1",
-	"0w8692CEApsMHme5SwpOjw" => "-1",
-	"111J9nxmdhyHSLNHeAL1jO" => "-1",
-	"3KzwlFAMKB3eVsCP2NyDwN" => "-1",
-	"4A10zgDO51IMdrLVfUnhh8" => "-1",
-	"4CgweKiwA0yckiVbG6eUJI" => "-1",
-	"4dgAnIHFpnFdSBqpRZheHq" => "-1",
-	"4gn6f5jaOO75s0oF7ozqGG" => "-1",
-	"4VcKXOCUzcrxltYt0Jyqfk" => "-1",
-	"4WznTvC9d1Oino7gLS8XHq" => "-1",
-	"4x2er6NU84V8bOjj1KE5Hh" => "-1",
-	"5pgaVcKREhdQ3OI7ZvP9tv" => "-1",
-	"5wnhqlZzXIq8aO9awQO2ND" => "-1",
-	"5yvjiLsbi25u0PjdpqQM2S" => "-1",
-	"61YthmX9Hi1gyqVl0MGEy2" => "-1",
-	"63Eji2cNg0vH9sYqxg5iHI" => "-1",
-	"6hHhe2mLkUJFPpXYu83YBK" => "-1",
-	"6QDLJorX8HQ2ogxZUCvtd1" => "-1",
+my $spotify2DeezerMap = 	{
+	'0cGaQUOlAm0smFXWUB8KIL' => -1,
+	'0ETFjACtuP2ADo6LFhL6HN' => 12047952,
+	'63k57x0qOkUWEMR0dkMivh' => 6237061,
 };
 
-sub getId { $spotify2QobuzMap->{$_[1]} }
+sub getId {
+	# return 12047952;
+	return -1;
+	$spotify2DeezerMap->{$_[1]} }
 
 sub getAlbum {
 	my ($client, $cb, $params, $args) = @_;
@@ -45,12 +33,12 @@ sub getAlbum {
 	my $albumName = lc($args->{album_title});
 	my $artist = lc($args->{album_artist});
 
-	main::INFOLOG && $log->is_info && $log->info("Did not find Qobuz album by ID, try text search instead: \"$args->{album_title}\" by $args->{album_artist}");
+	main::INFOLOG && $log->is_info && $log->info("Did not find Deezer album by ID, try text search instead: \"$args->{album_title}\" by $args->{album_artist}");
 
-	Plugins::Qobuz::Plugin::getAPIHandler($client)->search(sub {
+	Plugins::Deezer::Plugin::getAPIHandler($client)->search(sub {
 		my $searchResult = shift;
 
-		if (!$searchResult || !$searchResult->{albums}->{items}) {
+		if (!$searchResult || ref $searchResult ne 'ARRAY') {
 			# TODO do something
 			$cb->({ items => [{ name => cstring($client, 'EMPTY') }] });
 			return;
@@ -59,7 +47,7 @@ sub getAlbum {
 		my $candidate;
 
 		for my $weak (0, 1) {
-			for my $album ( @{$searchResult->{albums}->{items} || []} ) {
+			for my $album ( @$searchResult ) {
 				if (main::DEBUGLOG && $log->is_debug) {
 					$log->debug(Data::Dump::dump({
 						artist => $album->{artist}->{name},
@@ -68,7 +56,7 @@ sub getAlbum {
 				}
 
 				# Elvis Costello has enough albums on that list to deserve some special treatment...
-				$artist =~ s/(Elvis Costello) & The Attractions/$1/i if $weak;
+				$artist =~ s/(elvis costello) & The Attractions/$1/i if $weak;
 
 				next if !$album->{artist} || !$album->{title};
 				next if !$weak && lc($album->{artist}->{name}) ne $artist;
@@ -88,14 +76,17 @@ sub getAlbum {
 		}
 
 		if ($candidate) {
-			return Plugins::Qobuz::Plugin::QobuzGetTracks($client, $cb, $params, {
-				album_id => $candidate->{id}
+			return Plugins::Deezer::Plugin::getAlbum($client, $cb, $params, {
+				id => $candidate->{id},
+				title => $candidate->{title},
 			});
 		}
 
 		# TODO do something useful...
 		$cb->({ items => [{ name => cstring($client, 'EMPTY') }] });
-	}, $albumName, 'albums', {
+	},{
+		type => 'album',
+		search => $albumName,
 		limit => 10
 	});
 }
