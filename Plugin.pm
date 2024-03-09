@@ -187,6 +187,7 @@ sub getAlbumItem {
 		|| spotifyAlbumItem($client, $album)
 		|| tidalAlbumItem($client, $album)
 		|| qobuzAlbumItem($client, $album)
+		|| deezerAlbumItem($client, $album)
 		|| ytAlbumItem($client, $album);
 
 	if ($item && $item->{url}) {
