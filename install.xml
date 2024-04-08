@@ -7,6 +7,7 @@
 	<icon>plugins/1001Albums/html/icon_svg.png</icon>
   <creator>Michael Herger</creator>
   <homepageURL>https://1001albumsgenerator.com/</homepageURL>
+  <optionsURL>plugins/1001Albums/settings.html</optionsURL>
   <version>1.4.1</version>
   <defaultState>enabled</defaultState>
   <type>2</type>

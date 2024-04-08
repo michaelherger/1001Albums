@@ -58,9 +58,6 @@ sub postinitPlugin {
 	if ( Slim::Utils::PluginManager->isEnabled('Plugins::TIDAL::Plugin') ) {
 		$hasTIDAL = 1;
 	}
-	elsif ( !(Slim::Utils::Versions->compareVersions($::VERSION, '7.9') >= 0 && main::NOMYSB()) && Slim::Utils::PluginManager->isEnabled('Slim::Plugin::WiMP::Plugin') ) {
-		$hasTIDAL = 1;
-	}
 
 	if ( Slim::Utils::PluginManager->isEnabled('Plugins::Deezer::Plugin') ) {
 		require Plugins::1001Albums::Deezer;
