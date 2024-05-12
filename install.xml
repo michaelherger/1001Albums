@@ -9,6 +9,7 @@
   <homepageURL>https://1001albumsgenerator.com/</homepageURL>
   <optionsURL>plugins/1001Albums/settings.html</optionsURL>
   <version>1.4.1</version>
+  <category>musicservices</category>
   <defaultState>enabled</defaultState>
   <type>2</type>
   <targetApplication>
