@@ -7,35 +7,44 @@ PLUGIN_1001_ALBUMS_SHORT
 PLUGIN_1001_PROJECT_PAGE
 	DE	Deine Projektseite besuchen
 	EN	Visit your project page
+	NL	Bezoek jouw project pagina
 
 PLUGIN_1001_PROJECT_PAUSED
 	DE	Besuche deine Projektseite, um das Projekt weiter zu führen.
 	EN	To resume your project please visit your project page.
+	NL	Bezoek jouw project pagina om het project te hervatten.
 
 PLUGIN_1001_ALBUMS_ABOUT
 	DE	Über 1001albumsgenerator.com
 	EN	About 1001albumsgenerator.com
+	NL	Over 1001albumsgenerator.com
 
 PLUGIN_1001_ALBUMS_MORE_INFORMATION
 	DE	Besuche 1001albumsgenerator.com für weitere Informationen
 	EN	Visit 1001albumsgenerator.com for more information
+	NL	Bezoek 1001albumsgenerator.com voor meer informatie
 
 PLUGIN_1001_ALBUMS_REVIEWS
 	DE	Albumseite auf 1001albumsgenerator.com besuchen
 	EN	Visit album page on 1001albumsgenerator.com
+	NL	Bezoek album pagina op 1001albumsgenerator.com
 
 PLUGIN_1001_ALBUMS_HISTORY
 	DE	Verlauf
 	EN	History
+	NL	Geschiedenis
 
 PLUGIN_1001_ALBUMS_MISSING_USERNAME
 	DE	Bitte den Benutzernamen in den Einstellungen eingeben.
 	EN	Please enter your username in the plugin settings.
+	NL	Vul jouw gebruikersnaam in bij de instellingen van de plug-in. 
 
 PLUGIN_1001_ALBUMS_FAILED_VALIDATION
 	DE	Verifizierung des Profils ist fehlgeschlagen (%s).
 	EN	Failed to validate the profile name (%s).
+	NL	Kan de profielnaam (%s) niet valideren.
 
 PLUGIN_1001_ALBUMS_429
 	DE	Bitte probieres in ein paar Minuten wieder.
 	EN	Please try again in a minute or two.
+	NL	Probeer het alsjeblieft nog een keer over een paar minuten.
