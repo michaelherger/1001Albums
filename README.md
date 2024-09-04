@@ -9,4 +9,4 @@ Besides the album of the day the plugin also gives you access to the archive of 
 
 ![history](https://github.com/user-attachments/assets/05a5b81c-00a3-4e2a-874e-f94bdca6e846)
 
-Have fund!
+Have fun!
