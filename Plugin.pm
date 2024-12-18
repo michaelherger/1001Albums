@@ -26,6 +26,7 @@ $prefs->init({
 });
 
 my ($hasDeezer, $hasSpotty, $hasQobuz, $hasTIDAL, $hasYT);
+my @albumFetchers = (\&dbAlbumItem);
 
 sub initPlugin {
 	my $class = shift;
@@ -47,24 +48,34 @@ sub initPlugin {
 sub postinitPlugin {
 	my $class = shift;
 
-	$hasSpotty = Slim::Utils::PluginManager->isEnabled('Plugins::Spotty::Plugin');
-	$hasYT = Slim::Utils::PluginManager->isEnabled('Plugins::YouTube::Plugin');
-
-	if ( Slim::Utils::PluginManager->isEnabled('Plugins::Qobuz::Plugin') ) {
+	if ( $hasQobuz = Slim::Utils::PluginManager->isEnabled('Plugins::Qobuz::Plugin') ) {
+		main::INFOLOG && $log->is_info && $log->info("Qobuz plugin is enabled");
 		require Plugins::1001Albums::Qobuz;
-		$hasQobuz = 1;
+		push @albumFetchers, \&qobuzAlbumItem;
 	}
 
-	if ( Slim::Utils::PluginManager->isEnabled('Plugins::TIDAL::Plugin') ) {
-		$hasTIDAL = 1;
+	if ( $hasTIDAL = Slim::Utils::PluginManager->isEnabled('Plugins::TIDAL::Plugin') ) {
+		main::INFOLOG && $log->is_info && $log->info("TIDAL plugin is enabled");
+		push @albumFetchers, \&tidalAlbumItem;
 	}
 
-	if ( Slim::Utils::PluginManager->isEnabled('Plugins::Deezer::Plugin') ) {
+	if ( $hasDeezer = Slim::Utils::PluginManager->isEnabled('Plugins::Deezer::Plugin') ) {
+		main::INFOLOG && $log->is_info && $log->info("Deezer plugin is enabled");
 		require Plugins::1001Albums::Deezer;
-		$hasDeezer = 1;
+		push @albumFetchers, \&deezerAlbumItem;
 	}
 
-	if (!$hasDeezer && !$hasSpotty && !$hasQobuz && !$hasTIDAL && !$hasYT) {
+	if ( $hasSpotty = Slim::Utils::PluginManager->isEnabled('Plugins::Spotty::Plugin') ) {
+		main::INFOLOG && $log->is_info && $log->info("Spotty plugin is enabled");
+		push @albumFetchers, \&spotifyAlbumItem;
+	}
+
+	if ( $hasYT = Slim::Utils::PluginManager->isEnabled('Plugins::YouTube::Plugin') ) {
+		main::INFOLOG && $log->is_info && $log->info("YouTube plugin is enabled");
+		push @albumFetchers, \&ytAlbumItem;
+	}
+
+	if (@albumFetchers == 1) {
 		$log->error("This plugin requires a streaming service to work properly - unless you own all 1001 albums already.");
 	}
 }
@@ -180,12 +191,12 @@ sub handleFeed {
 sub getAlbumItem {
 	my ($client, $album, $timestamp) = @_;
 
-	my $item = dbAlbumItem($client, $album)
-		|| spotifyAlbumItem($client, $album)
-		|| tidalAlbumItem($client, $album)
-		|| qobuzAlbumItem($client, $album)
-		|| deezerAlbumItem($client, $album)
-		|| ytAlbumItem($client, $album);
+	my $item;
+
+	for my $fetcher (@albumFetchers) {
+		$item = $fetcher->($client, $album);
+		last if $item;
+	}
 
 	if ($item && $item->{url}) {
 		$item->{line2} .= ' - ' . Slim::Utils::DateTime::shortDateF($timestamp);
