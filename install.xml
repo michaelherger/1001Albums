@@ -6,9 +6,10 @@
   <description>PLUGIN_1001_ALBUMS</description>
 	<icon>plugins/1001Albums/html/icon_svg.png</icon>
   <creator>Michael Herger</creator>
+  <email>slim@herger.net</email>
   <homepageURL>https://1001albumsgenerator.com/</homepageURL>
   <optionsURL>plugins/1001Albums/settings.html</optionsURL>
-  <version>1.4.1</version>
+  <version>1.4.2</version>
   <category>musicservices</category>
   <defaultState>enabled</defaultState>
   <type>2</type>
