@@ -19,6 +19,12 @@ PLUGIN_1001_ALBUMS_ABOUT
 	EN	About 1001albumsgenerator.com
 	NL	Over 1001albumsgenerator.com
 
+PLUGIN_1001_ALBUMS_DONATE
+	DE	Spende für 1001albumsgenerator.com
+	EN	Donate to 1001albumsgenerator.com
+	FR	Faire un don à 1001albumsgenerator.com
+	NL	Doneer aan 1001albumsgenerator.com
+
 PLUGIN_1001_ALBUMS_MORE_INFORMATION
 	DE	Besuche 1001albumsgenerator.com für weitere Informationen
 	EN	Visit 1001albumsgenerator.com for more information
@@ -34,10 +40,40 @@ PLUGIN_1001_ALBUMS_HISTORY
 	EN	History
 	NL	Geschiedenis
 
+PLUGIN_1001_ALBUMS_0_STARS
+	DE	Nicht bewertet
+	EN	Not rated
+	NL	Geen beoordeling
+
+PLUGIN_1001_ALBUMS_1_STARS
+	DE	1 Stern
+	EN	1 Star
+	NL	1 Sterren
+
+PLUGIN_1001_ALBUMS_2_STARS
+	DE	2 Sterne
+	EN	2 Stars
+	NL	2 Sterren
+
+PLUGIN_1001_ALBUMS_3_STARS
+	DE	3 Sterne
+	EN	3 Stars
+	NL	3 Sterren
+
+PLUGIN_1001_ALBUMS_4_STARS
+	DE	4 Sterne
+	EN	4 Stars
+	NL	4 Sterren
+
+PLUGIN_1001_ALBUMS_5_STARS
+	DE	5 Sterne
+	EN	5 Stars
+	NL	5 Sterren
+
 PLUGIN_1001_ALBUMS_MISSING_USERNAME
 	DE	Bitte den Benutzernamen in den Einstellungen eingeben.
 	EN	Please enter your username in the plugin settings.
-	NL	Vul jouw gebruikersnaam in bij de instellingen van de plug-in. 
+	NL	Vul jouw gebruikersnaam in bij de instellingen van de plug-in.
 
 PLUGIN_1001_ALBUMS_FAILED_VALIDATION
 	DE	Verifizierung des Profils ist fehlgeschlagen (%s).

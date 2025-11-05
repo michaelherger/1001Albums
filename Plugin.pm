@@ -13,7 +13,8 @@ use Slim::Utils::Prefs;
 use Slim::Utils::Strings qw(cstring);
 
 use constant BASE_URL => 'https://1001albumsgenerator.com/';
-use constant ALBUM_URL => 'https://1001albumsgenerator.com/api/v1/projects/';
+use constant ALBUM_URL => BASE_URL . 'api/v1/projects/';
+use constant DONATION_URL => BASE_URL . 'info/info#donations';
 
 my $log = Slim::Utils::Log->addLogCategory({
 	'category'    => 'plugin.1001albums',
@@ -127,10 +128,14 @@ sub handleFeed {
 
 				if ($albumData->{history}) {
 					my $historyItems = [];
+					my $ratedItems = [[], [], [], [], [], []]; # 0-5 stars
 
 					foreach (@{$albumData->{history}}) {
 						my $item = getAlbumItem($client, $_->{album}, str2time($_->{generatedAt}));
-						unshift @$historyItems, $item if $item && $item->{url};
+						next unless $item && $item->{url};
+
+						unshift @$historyItems, $item;
+						unshift @{$ratedItems->[$_->{rating} || 0]}, $item;
 					}
 
 					push @$items, {
@@ -139,6 +144,18 @@ sub handleFeed {
 						type  => 'outline',
 						items => $historyItems
 					} if scalar @$historyItems;
+
+					for (my $i = 5; $i >= 0; $i--) {
+						my $starItems = $ratedItems->[$i];
+						next unless scalar @$starItems;
+
+						push @$items, {
+							name  => cstring($client, "PLUGIN_1001_ALBUMS_${i}_STARS"),
+							image => "plugins/1001Albums/html/${i}star_svg.png",
+							type  => 'outline',
+							items => $starItems
+						};
+					}
 				}
 			}
 
@@ -158,6 +175,10 @@ sub handleFeed {
 			}
 
 			push @$items, {
+				name => $client->string('PLUGIN_1001_ALBUMS_DONATE'),
+				image => 'plugins/1001Albums/html/donate_MTL_icon_volunteer_activism.png',
+				weblink => DONATION_URL
+			},{
 				name => $client->string('PLUGIN_1001_ALBUMS_ABOUT'),
 				image => __PACKAGE__->_pluginDataFor('icon'),
 				weblink => BASE_URL
