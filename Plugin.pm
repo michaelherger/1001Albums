@@ -8,6 +8,7 @@ use JSON::XS::VersionOneAndTwo;
 use base qw(Slim::Plugin::OPMLBased);
 
 use Slim::Networking::SimpleAsyncHTTP;
+use Slim::Schema;
 use Slim::Utils::Log;
 use Slim::Utils::Prefs;
 use Slim::Utils::Strings qw(cstring);
@@ -26,7 +27,7 @@ $prefs->init({
 	username => ''
 });
 
-my ($hasDeezer, $hasSpotty, $hasQobuz, $hasTIDAL, $hasYT);
+my ($dbh, $hasDeezer, $hasSpotty, $hasQobuz, $hasTIDAL, $hasYT);
 my @albumFetchers = (\&dbAlbumItem);
 
 sub initPlugin {
@@ -79,8 +80,11 @@ sub postinitPlugin {
 	if (@albumFetchers == 1) {
 		$log->error("This plugin requires a streaming service to work properly - unless you own all 1001 albums already.");
 	}
+
+	$dbh = Slim::Schema->dbh;
 }
 
+my $dbt;
 sub handleFeed {
 	my ($client, $cb) = @_;
 
@@ -224,7 +228,7 @@ sub getAlbumItem {
 		$item->{name}  .= ' - ' . Slim::Utils::DateTime::shortDateF($timestamp);
 	}
 
-	main::INFOLOG && $log->is_info && $log->info(Data::Dump::dump($item));
+	main::DEBUGLOG && $log->is_debug && $log->debug(Data::Dump::dump($item));
 
 	return $item;
 }
@@ -244,18 +248,22 @@ sub _baseAlbumItem {
 sub dbAlbumItem {
 	my ($client, $args) = @_;
 
-	my $album = Slim::Schema->rs('Album')->search({
-		title => { like => $args->{name} },
-		'contributor.name' => { like => $args->{artist} },
-	},{
-		prefetch => 'contributor'
-	})->first();
+	my $sth = $dbh->prepare_cached(q(
+		SELECT albums.id AS id, albums.title AS title, contributors.name AS name, albums.extid AS extid
+		FROM albums
+			JOIN contributors ON contributors.id = albums.contributor
+		WHERE contributors.namesearch = ? AND albums.titlesearch = ?
+		LIMIT 1
+	));
+	$sth->execute(Slim::Utils::Text::ignoreCase($args->{artist}), Slim::Utils::Text::ignoreCase($args->{name}));
+	my $albumHash = $sth->fetchrow_hashref || {};
+	$sth->finish;
 
-	if ($album) {
+	if ($albumHash->{id}) {
 		my $item = _baseAlbumItem($client, $args);
 		$item->{url} = $item->{playlist} = \&Slim::Menu::BrowseLibrary::_tracks;
-		$item->{passthrough} = [ { searchTags => ["album_id:" . $album->id], library_id => -1 } ],
-		$item->{favorites_url} = $album->extid || sprintf('db:album.title=%s&contributor.name=%s', URI::Escape::uri_escape_utf8($album->name), URI::Escape::uri_escape_utf8($args->{artist})),
+		$item->{passthrough} = [ { searchTags => ["album_id:" . $albumHash->{id}], library_id => -1 } ],
+		$item->{favorites_url} = $albumHash->{extid} || sprintf('db:album.title=%s&contributor.name=%s', URI::Escape::uri_escape_utf8($albumHash->{title}), URI::Escape::uri_escape_utf8($albumHash->{name})),
 
 		return $item;
 	}
@@ -312,7 +320,7 @@ sub ytAlbumItem {
 sub tidalAlbumItem {
 	my ($client, $args) = @_;
 
-	return unless $hasTIDAL && $client;
+	return unless $hasTIDAL && $client && $args->{tidalId};
 
 	my $item = _baseAlbumItem($client, $args);
 	$item->{url} = $item->{playlist} = 'https://tidal.com/browse/album/' . $args->{tidalId};
