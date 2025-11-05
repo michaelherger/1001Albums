@@ -80,14 +80,35 @@ sub postinitPlugin {
 	if (@albumFetchers == 1) {
 		$log->error("This plugin requires a streaming service to work properly - unless you own all 1001 albums already.");
 	}
+
+	if ( Slim::Utils::PluginManager->isEnabled('Plugins::MaterialSkin::Plugin') && Plugins::MaterialSkin::Plugin->can('registerHomeExtra') ) {
+		Plugins::MaterialSkin::Plugin->registerHomeExtra('1001albums', {
+			title   => 'PLUGIN_1001_ALBUMS',
+			icon    => __PACKAGE__->_pluginDataFor('icon'),
+			handler => sub {
+				my ($client, $cb) = @_;
+
+				my @cmd = ("1001Albums", "items", 0, 999, "menu:home_heroes");
+				Slim::Control::Request::executeRequest($client || (Slim::Player::Client::clients())[0], \@cmd, sub {
+						my $response = shift;
+						my $results = $response->getResults() || {};
+
+						$cb->($results || {});
+				});
+			},
+			needsPlayer => 1,
+		});
+	}
 }
 
 my $dbt;
 sub handleFeed {
-	my ($client, $cb) = @_;
+	my ($client, $cb, $args) = @_;
+
+	my $homeHeroes = ref $args && $args->{params} && $args->{params}->{menu} && $args->{params}->{menu} eq 'home_heroes';
 
 	if (!$prefs->get('username')) {
-		return $cb->([{
+		return $cb->($homeHeroes ? [] : [{
 			name => cstring($client, 'PLUGIN_1001_ALBUMS_MISSING_USERNAME'),
 			type => 'text'
 		},{
@@ -126,7 +147,7 @@ sub handleFeed {
 					name => $client->string('PLUGIN_1001_ALBUMS_REVIEWS'),
 					image => 'plugins/1001Albums/html/albumreviews_MTL_icon_rate_review.png',
 					weblink => $currentAlbum->{globalReviewsUrl}
-				} if $currentAlbum->{globalReviewsUrl} && canWeblink($client);
+				} if $currentAlbum->{globalReviewsUrl} && canWeblink($client) && !$homeHeroes;
 
 				if ($albumData->{history}) {
 					my $historyItems = [];
@@ -161,14 +182,14 @@ sub handleFeed {
 				}
 			}
 
-			if ($albumData && $albumData->{paused}) {
+			if ($albumData && $albumData->{paused} && !$homeHeroes) {
 				push @$items, {
 					name => $client->string('PLUGIN_1001_PROJECT_PAUSED'),
 					image => 'plugins/1001Albums/html/profile_MTL_icon_bar_chart.png',
 					weblink => BASE_URL . $prefs->get('username'),
 				};
 			}
-			elsif (canWeblink($client)) {
+			elsif (canWeblink($client) && !$homeHeroes) {
 				push @$items, {
 					name => $client->string('PLUGIN_1001_PROJECT_PAGE'),
 					image => 'plugins/1001Albums/html/profile_MTL_icon_bar_chart.png',
@@ -184,7 +205,7 @@ sub handleFeed {
 				name => $client->string('PLUGIN_1001_ALBUMS_ABOUT'),
 				image => __PACKAGE__->_pluginDataFor('icon'),
 				weblink => BASE_URL
-			} if canWeblink($client);
+			} if canWeblink($client) && !$homeHeroes;
 
 			return $cb->({
 				items => $items
