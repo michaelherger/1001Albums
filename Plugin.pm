@@ -82,26 +82,11 @@ sub postinitPlugin {
 	}
 
 	if ( Slim::Utils::PluginManager->isEnabled('Plugins::MaterialSkin::Plugin') && Plugins::MaterialSkin::Plugin->can('registerHomeExtra') ) {
-		Plugins::MaterialSkin::Plugin->registerHomeExtra('1001albums', {
-			title   => 'PLUGIN_1001_ALBUMS',
-			icon    => __PACKAGE__->_pluginDataFor('icon'),
-			handler => sub {
-				my ($client, $cb) = @_;
-
-				my @cmd = ("1001Albums", "items", 0, 999, "menu:home_heroes");
-				Slim::Control::Request::executeRequest($client || (Slim::Player::Client::clients())[0], \@cmd, sub {
-						my $response = shift;
-						my $results = $response->getResults() || {};
-
-						$cb->($results || {});
-				});
-			},
-			needsPlayer => 1,
-		});
+		require Plugins::1001Albums::HomeExtra;
+		Plugins::1001Albums::HomeExtra->initPlugin();
 	}
 }
 
-my $dbt;
 sub handleFeed {
 	my ($client, $cb, $args) = @_;
 
