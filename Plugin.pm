@@ -27,7 +27,7 @@ $prefs->init({
 	username => ''
 });
 
-my ($dbh, $hasDeezer, $hasSpotty, $hasQobuz, $hasTIDAL, $hasYT);
+my ($hasDeezer, $hasSpotty, $hasQobuz, $hasTIDAL, $hasYT);
 my @albumFetchers = (\&dbAlbumItem);
 
 sub initPlugin {
@@ -80,8 +80,6 @@ sub postinitPlugin {
 	if (@albumFetchers == 1) {
 		$log->error("This plugin requires a streaming service to work properly - unless you own all 1001 albums already.");
 	}
-
-	$dbh = Slim::Schema->dbh;
 }
 
 my $dbt;
@@ -248,6 +246,7 @@ sub _baseAlbumItem {
 sub dbAlbumItem {
 	my ($client, $args) = @_;
 
+	my $dbh = Slim::Schema->dbh;
 	my $sth = $dbh->prepare_cached(q(
 		SELECT albums.id AS id, albums.title AS title, contributors.name AS name, albums.extid AS extid
 		FROM albums
@@ -255,7 +254,9 @@ sub dbAlbumItem {
 		WHERE contributors.namesearch = ? AND albums.titlesearch = ?
 		LIMIT 1
 	));
+
 	$sth->execute(Slim::Utils::Text::ignoreCase($args->{artist}), Slim::Utils::Text::ignoreCase($args->{name}));
+
 	my $albumHash = $sth->fetchrow_hashref || {};
 	$sth->finish;
 
