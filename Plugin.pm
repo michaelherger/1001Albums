@@ -82,8 +82,11 @@ sub postinitPlugin {
 	}
 
 	if ( Slim::Utils::PluginManager->isEnabled('Plugins::MaterialSkin::Plugin') && Plugins::MaterialSkin::Plugin->can('registerHomeExtra') ) {
-		require Plugins::1001Albums::HomeExtra;
-		Plugins::1001Albums::HomeExtra->initPlugin();
+		eval {
+			require Plugins::1001Albums::HomeExtra;
+			Plugins::1001Albums::HomeExtra->initPlugin();
+		};
+		$log->error("Could not load 1001 Albums Home Extra: $@") if $@;
 	}
 }
 
