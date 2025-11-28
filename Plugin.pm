@@ -84,19 +84,16 @@ sub postinitPlugin {
 	if ( Slim::Utils::PluginManager->isEnabled('Plugins::MaterialSkin::Plugin') && Plugins::MaterialSkin::Plugin->can('registerHomeExtra') ) {
 		eval {
 			require Plugins::1001Albums::HomeExtra;
-			Plugins::1001Albums::HomeExtra->initPlugin();
 		};
 		$log->error("Could not load 1001 Albums Home Extra: $@") if $@;
 	}
 }
 
 sub handleFeed {
-	my ($client, $cb, $args) = @_;
-
-	my $homeHeroes = ref $args && $args->{params} && $args->{params}->{menu} && $args->{params}->{menu} eq 'home_heroes';
+	my ($client, $cb) = @_;
 
 	if (!$prefs->get('username')) {
-		return $cb->($homeHeroes ? [] : [{
+		return $cb->([{
 			name => cstring($client, 'PLUGIN_1001_ALBUMS_MISSING_USERNAME'),
 			type => 'text'
 		},{
@@ -135,7 +132,7 @@ sub handleFeed {
 					name => $client->string('PLUGIN_1001_ALBUMS_REVIEWS'),
 					image => 'plugins/1001Albums/html/albumreviews_MTL_icon_rate_review.png',
 					weblink => $currentAlbum->{globalReviewsUrl}
-				} if $currentAlbum->{globalReviewsUrl} && canWeblink($client) && !$homeHeroes;
+				} if $currentAlbum->{globalReviewsUrl} && canWeblink($client);
 
 				if ($albumData->{history}) {
 					my $historyItems = [];
@@ -170,14 +167,14 @@ sub handleFeed {
 				}
 			}
 
-			if ($albumData && $albumData->{paused} && !$homeHeroes) {
+			if ($albumData && $albumData->{paused}) {
 				push @$items, {
 					name => $client->string('PLUGIN_1001_PROJECT_PAUSED'),
 					image => 'plugins/1001Albums/html/profile_MTL_icon_bar_chart.png',
 					weblink => BASE_URL . $prefs->get('username'),
 				};
 			}
-			elsif (canWeblink($client) && !$homeHeroes) {
+			elsif (canWeblink($client)) {
 				push @$items, {
 					name => $client->string('PLUGIN_1001_PROJECT_PAGE'),
 					image => 'plugins/1001Albums/html/profile_MTL_icon_bar_chart.png',
@@ -193,7 +190,7 @@ sub handleFeed {
 				name => $client->string('PLUGIN_1001_ALBUMS_ABOUT'),
 				image => __PACKAGE__->_pluginDataFor('icon'),
 				weblink => BASE_URL
-			} if canWeblink($client) && !$homeHeroes;
+			} if canWeblink($client);
 
 			return $cb->({
 				items => $items
