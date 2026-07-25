@@ -27,7 +27,7 @@ $prefs->init({
 	username => ''
 });
 
-my ($hasDeezer, $hasSpotty, $hasQobuz, $hasTIDAL, $hasYT);
+my ($hasDeezer, $hasSpotty, $hasSpotOn, $hasQobuz, $hasTIDAL, $hasYT);
 my @albumFetchers = (\&dbAlbumItem);
 
 sub initPlugin {
@@ -70,6 +70,11 @@ sub postinitPlugin {
 	if ( $hasSpotty = Slim::Utils::PluginManager->isEnabled('Plugins::Spotty::Plugin') ) {
 		main::INFOLOG && $log->is_info && $log->info("Spotty plugin is enabled");
 		push @albumFetchers, \&spotifyAlbumItem;
+	}
+	
+	if ( $hasSpotOn = Slim::Utils::PluginManager->isEnabled('Plugins::SpotOn::Plugin') ) {
+    	main::INFOLOG && $log->is_info && $log->info("SpotOn plugin is enabled");
+    	push @albumFetchers, \&spotOnAlbumItem;
 	}
 
 	if ( $hasYT = Slim::Utils::PluginManager->isEnabled('Plugins::YouTube::Plugin') ) {
@@ -309,6 +314,17 @@ sub spotifyAlbumItem {
 	$item->{url} = $item->{playlist} = 'spotify:album:' . $args->{spotifyId};
 
 	return $item;
+}
+
+sub spotOnAlbumItem {
+    my ($client, $args) = @_;
+
+    return unless $hasSpotOn && $args->{spotifyId};
+
+    my $item = _baseAlbumItem($client, $args);
+    $item->{url} = $item->{playlist} = 'spoton://album:' . $args->{spotifyId};
+
+    return $item;
 }
 
 sub ytAlbumItem {
