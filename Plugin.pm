@@ -3,7 +3,7 @@ package Plugins::1001Albums::Plugin;
 use strict;
 
 use Date::Parse qw(str2time);
-use JSON::XS::VersionOneAndTwo;
+use JSON::XS;
 
 use base qw(Slim::Plugin::OPMLBased);
 
@@ -71,12 +71,12 @@ sub postinitPlugin {
 		main::INFOLOG && $log->is_info && $log->info("Spotty plugin is enabled");
 		push @albumFetchers, \&spotifyAlbumItem;
 	}
-	
+
 	if ( $hasSpotOn = Slim::Utils::PluginManager->isEnabled('Plugins::SpotOn::Plugin') ) {
 		main::INFOLOG && $log->is_info && $log->info("SpotOn plugin is enabled");
 		push @albumFetchers, \&spotOnAlbumItem;
 	}
-	
+
 	if ( $hasYT = Slim::Utils::PluginManager->isEnabled('Plugins::YouTube::Plugin') ) {
 		main::INFOLOG && $log->is_info && $log->info("YouTube plugin is enabled");
 		push @albumFetchers, \&ytAlbumItem;
@@ -111,7 +111,7 @@ sub handleFeed {
 		sub {
 			my $response = shift;
 
-			my $albumData = eval { from_json($response->content) };
+			my $albumData = eval { decode_json($response->content) };
 
 			$@ && $log->error($@);
 

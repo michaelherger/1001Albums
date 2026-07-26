@@ -2,7 +2,7 @@ package Plugins::1001Albums::Settings;
 
 use strict;
 use base qw(Slim::Web::Settings);
-use JSON::XS::VersionOneAndTwo;
+use JSON::XS;
 
 use Slim::Utils::Prefs;
 
@@ -24,7 +24,7 @@ sub handler {
 		my $cb = sub {
 			my ($response, $error) = @_;
 
-			my $profile = eval { from_json($response->content) } unless $error;
+			my $profile = eval { decode_json($response->content) } unless $error;
 
 			if ($error || $@ || !$profile) {
 				delete $params->{saveSettings};
