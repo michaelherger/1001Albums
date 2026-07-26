@@ -73,10 +73,10 @@ sub postinitPlugin {
 	}
 	
 	if ( $hasSpotOn = Slim::Utils::PluginManager->isEnabled('Plugins::SpotOn::Plugin') ) {
-    	main::INFOLOG && $log->is_info && $log->info("SpotOn plugin is enabled");
-    	push @albumFetchers, \&spotOnAlbumItem;
+		main::INFOLOG && $log->is_info && $log->info("SpotOn plugin is enabled");
+		push @albumFetchers, \&spotOnAlbumItem;
 	}
-
+	
 	if ( $hasYT = Slim::Utils::PluginManager->isEnabled('Plugins::YouTube::Plugin') ) {
 		main::INFOLOG && $log->is_info && $log->info("YouTube plugin is enabled");
 		push @albumFetchers, \&ytAlbumItem;
@@ -317,14 +317,14 @@ sub spotifyAlbumItem {
 }
 
 sub spotOnAlbumItem {
-    my ($client, $args) = @_;
+	my ($client, $args) = @_;
 
-    return unless $hasSpotOn && $args->{spotifyId};
+	return unless $hasSpotOn && $args->{spotifyId};
 
-    my $item = _baseAlbumItem($client, $args);
-    $item->{url} = $item->{playlist} = 'spoton://album:' . $args->{spotifyId};
+	my $item = _baseAlbumItem($client, $args);
+	$item->{url} = $item->{playlist} = 'spoton://album:' . $args->{spotifyId};
 
-    return $item;
+	return $item;
 }
 
 sub ytAlbumItem {
