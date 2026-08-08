@@ -80,6 +80,9 @@ sub postinitPlugin {
 	if ( $hasYT = Slim::Utils::PluginManager->isEnabled('Plugins::YouTube::Plugin') ) {
 		main::INFOLOG && $log->is_info && $log->info("YouTube plugin is enabled");
 		push @albumFetchers, \&ytAlbumItem;
+	} elsif ( $hasYT = Slim::Utils::PluginManager->isEnabled('Plugins::YouTubeMusic::Plugin') ) {
+		main::INFOLOG && $log->is_info && $log->info("YouTubeMusic plugin is enabled");
+		push @albumFetchers, \&ytAlbumItem;	# YouTubeMusic plugin supports same URL scheme as YouTube plugin
 	}
 
 	if (@albumFetchers == 1) {
